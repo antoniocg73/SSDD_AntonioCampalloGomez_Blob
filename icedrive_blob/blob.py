@@ -49,9 +49,9 @@ class BlobService(IceDrive.BlobService):
 
     def _create_data_transfer(self, blob_data: bytes, current: Ice.Current) -> IceDrive.DataTransferPrx:
         """Crea un objeto DataTransfer y devuelve su proxy."""
-        data_transfer_impl = DataTransfer(blob_data)
-        data_transfer_proxy = current.adapter.addWithUUID(data_transfer_impl)
-        return IceDrive.DataTransferPrx.uncheckedCast(data_transfer_proxy)
+        data_transfer_impl = DataTransfer(blob_data) # Crea un objeto DataTransfer
+        data_transfer_proxy = current.adapter.addWithUUID(data_transfer_impl) # Obtiene el proxy del objeto DataTransfer
+        return IceDrive.DataTransferPrx.uncheckedCast(data_transfer_proxy) # Devuelve el proxy del objeto DataTransfer
 
 
     def link(self, blob_id: str, current: Ice.Current = None) -> None:
