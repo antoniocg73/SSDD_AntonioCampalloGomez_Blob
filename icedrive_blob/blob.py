@@ -9,23 +9,35 @@ import hashlib
 class DataTransfer(IceDrive.DataTransfer):
     """Implementation of an IceDrive.DataTransfer interface."""
 
-    def __init__(self, file_path):
-        self.file_path = file_path   #El camino al fichero a leer
-        self.file = open(file_path, 'rb') # Abre el fichero en modo binario
+    def __init__(self, source):
+        if isinstance(source, str):
+            # Si source es una cadena, asumimos que es la ruta a un archivo en disco
+            self.source_type = "file" # Almacena el tipo de fuente
+            self.file_path = source # Almacena la ruta al archivo
+            self.file = open(self.file_path, 'rb') # Abre el archivo en modo lectura binaria
+        else:
+            # Si source no es una cadena, asumimos que son los propios datos del blob
+            self.source_type = "blob_data" # Almacena el tipo de fuente
+            self.blob_data = source # Almacena los datos del blob
+            self.position = 0 # Almacena la posición actual en los datos del blob
 
     def read(self, size: int, current: Ice.Current = None) -> bytes:
-        """Returns a list of bytes from the opened file."""
-        data = self.file.read(size) # Lee size bytes del fichero
-        if not data: # Si no hay datos, se cierra el fichero
-            self.close(current) # Se cierra el fichero
-        return data # Devuelve los datos leídos
-    
+        """Returns a list of bytes from the opened file or blob_data."""
+        if self.source_type == "file": # Si la fuente es un archivo
+            data = self.file.read(size) # Lee size bytes del archivo
+            if not data: # Si no hay datos
+                self.close(current) # Se cierra el archivo
+        else:
+            data = self.blob_data[self.position : self.position + size] # Lee size bytes de los datos del blob
+            self.position += size # Actualiza la posición actual en los datos del blob
+        return data
+
     def close(self, current: Ice.Current = None) -> None:
         """Close the currently opened file."""
-        if not self.file.closed: # Si el fichero no está cerrado
-            self.file.close() # Cierra el fichero
-
-class BlobService(IceDrive.BlobService):
+        if self.source_type == "file" and not self.file.closed: # Si la fuente es un archivo y no está cerrado
+            self.file.close() # Se cierra el archivo
+            
+class BlobService(IceDrive.BlobService): 
     """Implementation of an IceDrive.BlobService interface."""
 
     def __init__(self):
