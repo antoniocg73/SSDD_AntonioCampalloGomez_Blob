@@ -6,7 +6,7 @@ import IceDrive
 import hashlib
 
 
-class DataTransfer(IceDrive.DataTransfer):
+class DataTransfer(IceDrive.DataTransfer): #DUDA DE SI ES SOLO UN FICHERO
     """Implementation of an IceDrive.DataTransfer interface."""
 
     def __init__(self, source):
