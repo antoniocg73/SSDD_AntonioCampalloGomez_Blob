@@ -2,7 +2,7 @@
 
 import Ice
 
-import IceDrive
+import IceDrive 
 import hashlib
 
 
@@ -84,7 +84,7 @@ class BlobService(IceDrive.BlobService):
 
     def upload(
         self, blob: IceDrive.DataTransferPrx, current: Ice.Current = None
-    ) -> str:
+    ) -> str: #Me falta poner la excepción
         """Register a DataTransfer object to upload a file to the service."""
         blob_data = self._get_blob_data(blob, current) # Obtiene los datos del blob
         blob_id = self._generate_blob_id(blob_data) # Genera un identificador para el blob
