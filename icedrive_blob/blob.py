@@ -86,12 +86,15 @@ class BlobService(IceDrive.BlobService):
         self, blob: IceDrive.DataTransferPrx, current: Ice.Current = None
     ) -> str: #Me falta poner la excepción
         """Register a DataTransfer object to upload a file to the service."""
-        blob_data = self._get_blob_data(blob, current) # Obtiene los datos del blob
-        blob_id = self._generate_blob_id(blob_data) # Genera un identificador para el blob
-        self.blob_storage[blob_id] = blob_data # Almacena el blob
-        self.linked_blobs[blob_id] = False # Marca el blob como no vinculado
-        return blob_id
-    
+        try:
+            blob_data = self._get_blob_data(blob, current) # Obtiene los datos del blob
+            blob_id = self._generate_blob_id(blob_data) # Genera un identificador para el blob
+            self.blob_storage[blob_id] = blob_data # Almacena el blob
+            self.linked_blobs[blob_id] = False # Marca el blob como no vinculado
+            return blob_id # Devuelve el identificador del blob
+        except Exception as e:
+            raise IceDrive.FailedToReadData(str(e)) # Si no se pueden leer los datos, se lanza una excepción
+
     def download(
         self, blob_id: str, current: Ice.Current = None
     ) -> IceDrive.DataTransferPrx:
