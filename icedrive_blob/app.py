@@ -17,7 +17,7 @@ class BlobApp(Ice.Application):
         adapter = self.communicator().createObjectAdapter("BlobAdapter")
         adapter.activate()
 
-        servant = BlobService()
+        servant = BlobService("fichero") #debo pasarle fichero
         servant_proxy = adapter.addWithUUID(servant)
 
         logging.info("Proxy: %s", servant_proxy)
@@ -31,4 +31,5 @@ class BlobApp(Ice.Application):
 def main():
     """Handle the icedrive-authentication program."""
     app = BlobApp()
-    return app.main(sys.argv)
+    return app.main(sys.argv, "config/blob.config")
+
