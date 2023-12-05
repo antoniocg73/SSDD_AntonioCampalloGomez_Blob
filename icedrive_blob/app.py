@@ -17,7 +17,8 @@ class BlobApp(Ice.Application):
         adapter = self.communicator().createObjectAdapter("BlobAdapter")
         adapter.activate()
 
-        servant = BlobService("fichero") #debo pasarle fichero
+        directory = self.communicator().getProperties().getProperty("directoryName")
+        servant = BlobService(directory) #debo pasarle directorio
         servant_proxy = adapter.addWithUUID(servant)
 
         logging.info("Proxy: %s", servant_proxy)

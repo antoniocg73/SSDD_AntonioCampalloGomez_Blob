@@ -4,7 +4,9 @@ import Ice
 
 import IceDrive 
 import hashlib
-
+import os
+import json
+from pathlib import Path
 
 class DataTransfer(IceDrive.DataTransfer): #DUDA DE SI ES SOLO UN FICHERO
     """Implementation of an IceDrive.DataTransfer interface."""
@@ -25,17 +27,20 @@ class DataTransfer(IceDrive.DataTransfer): #DUDA DE SI ES SOLO UN FICHERO
         """Close the currently opened file."""
         if not self.file.closed: # Si no está cerrado
             self.file.close() # Se cierra el archivo
-            #DUDA DE COMO. Se borra esta identidad de objeto de la lista de identidades de objetos del adaptador. 
-            
+            current.adapter.remove(current.id) #revisar si es current.id  # Se elimina el objeto DataTransfer del adaptador
+                        
 class BlobService(IceDrive.BlobService): 
     """Implementation of an IceDrive.BlobService interface."""
 
-    def __init__(self, file_path):
-        self.blob_storage = {} # Inicializa un diccionario para almacenar rutas absolutas a los archivos
-        #para sacar rutas absolutas os.path.abspath(file_path)
-        self.linked_blobs = {} # Inicializa un diccionario para rastrear qué blobs están vinculados a directorios
-        #os.listdir(file_path) #obtengo lista de ficheros en el directorio
-        #le paso directorio al init cuando inicializo el servicio
+    #SI
+    def __init__(self, directory_path):
+        self.directory_path = directory_path # Almacena la ruta al directorio   
+        self.rutaFicheroJson = Path(directory_path).joinpath("enlaces.json") #obtener ruta absoluta del fichero de tipo de objeto Path
+        if not os.path.exists(self.rutaFicheroJson): #si no existe el fichero
+            self.escribirEnJson()
+            self.linked_blobs = {} # Diccionario de blobs vinculados
+        else:
+            self.leerDeJson()
 
     def _get_blob_data(self, blob: IceDrive.DataTransferPrx, current: Ice.Current) -> bytes:
         """Lee los datos del blob."""
@@ -52,6 +57,15 @@ class BlobService(IceDrive.BlobService):
         return blob_data # Devuelve los datos del blob
     
     #funcion para calcular el hash de los datos del blob ya existentes en el directorio
+    #json para persistencia para recordar los enlaces a archivos, los links
+
+    #BLOB SERVICE: ALMACENADO LA RELACION ENTRE EL BLOB ID Y LA RUTA DEL FICHERO
+    #OTRA RELACION EL BLOB ID TIENE 1 RELACION DE ENLACES, SOLO 1 RELACION DE ENLACES
+    # json clave blob_id valor numero de enlaces del blob_id
+
+
+
+
     #Recomendacion: otra clase para la gestion de los ficheros
 
     def _generate_blob_id(self, blob_data: bytes) -> str:
@@ -65,21 +79,32 @@ class BlobService(IceDrive.BlobService):
         return IceDrive.DataTransferPrx.uncheckedCast(data_transfer_proxy) # Devuelve el proxy del objeto DataTransfer
 
 
+    #SI
+    def escribirEnJson(self):
+        with open(self.rutaFicheroJson, 'w') as f:
+            json.dump(self.linked_blobs, f)
+    #SI
+    def leerDeJson(self):
+        with open(self.rutaFicheroJson, 'r') as f:
+            self.linked_blobs = json.load(f)
+    #SI
     def link(self, blob_id: str, current: Ice.Current = None) -> None:
         """Mark a blob_id file as linked in some directory."""
-        if blob_id in self.blob_storage: # Si el blob está almacenado 
-            self.linked_blobs[blob_id] += 1 # Se marca como vinculado #RECOMENDACION: ALMACENAR UN ENTERO EN VEZ DE UN BOOLEANO. Esto implica cambiar la logica ya que hay que tener en cuenta un contador. cada vez que creo con upload, contador reiniciado
+        if blob_id in self.linked_blobs: # Si el blob está almacenado 
+            self.linked_blobs[blob_id] += 1 # Se marca como vinculado
+            self.escribirEnJson()
         else:
-            raise IceDrive.UnknownBlob("Blob no encontrado") # Si no está almacenado, se lanza una excepción
-        
+            raise IceDrive.UnknownBlob(blob_id) # Si no está almacenado, se lanza una excepción
+    #SI
     def unlink(self, blob_id: str, current: Ice.Current = None) -> None:
         """Mark a blob_id as unlinked (removed) from some directory."""
-        if blob_id in self.blob_storage: # Si el blob está almacenado
+        if blob_id in self.linked_blobs: # Si el blob está almacenado
                 self.linked_blobs[blob_id] -=1 # Se marca como no vinculado 
                 if self.linked_blobs[blob_id] == 0: # Si el blob no está vinculado
                     del self.linked_blobs[blob_id] # Se elimina del diccionario de blobs vinculados
-                    del self.blob_storage[blob_id] # Se elimina del almacenamiento
-                    #DUDA DE COMO: os.unlink(file_path) #borrar fichero del disco
+                    rutaFicheroAEliminar = Path(self.directory_path).joinpath(blob_id) #obtener ruta absoluta del fichero
+                    os.unlink(rutaFicheroAEliminar) #borrar fichero del disco
+                self.escribirEnJson()
         else:
             raise IceDrive.UnknownBlob("Blob no encontrado") # Si no está almacenado, se lanza una excepción
 
@@ -87,6 +112,11 @@ class BlobService(IceDrive.BlobService):
         self, blob: IceDrive.DataTransferPrx, current: Ice.Current = None
     ) -> str:
         """Register a DataTransfer object to upload a file to the service."""
+        #Cuando me mandan el blob, hacer bucle hacendo reads en un archivo temporal e ir escribiendo en mi archivo normal hasta recibirlo entero (devuelve cadena vacía) 
+        # y luego cerrar el archivo temporal 
+        #libreria archivos temporales de python tempfile
+        # le tengo q decir q no borre el archivo temporal delete_on_close=False
+        #todo esto en get_blob_data
         try:
             blob_data = self._get_blob_data(blob, current) # Obtiene los datos del blob
             blob_id = self._generate_blob_id(blob_data) # Genera un identificador para el blob
