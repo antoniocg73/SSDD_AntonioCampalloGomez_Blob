@@ -108,33 +108,41 @@ class BlobService(IceDrive.BlobService):
         else:
             raise IceDrive.UnknownBlob("Blob no encontrado") # Si no está almacenado, se lanza una excepción
 
-    def calculate_blob_id(self, blob_transfer: IceDrive.DataTransfer) -> str:
+    def calculate_blob_id(self, blob_transfer: DataTransfer) -> str:
         """Calcula el identificador único del blob basado en su contenido."""
         hash_object = hashlib.sha256() # Crea un objeto hash
-        while True: # Mientras haya datos
-            data = blob_transfer.read(4096) # Lee 4096 bytes del blob
-            if not data: # Si no hay datos, se cierra el fichero
-                break # Se cierra el fichero
-            hash_object.update(data) # Actualiza el hash con los datos leídos
+        with open(blob_transfer, 'rb') as f: #abrir fichero en modo lectura binaria
+            while True: # Mientras haya datos
+                data = blob_transfer.read(4096) # Lee 4096 bytes del blob
+                if not data: # Si no hay datos, se cierra el fichero
+                    blob_transfer.close() # Se cierra el objeto DataTransfer
+                    break # Se cierra el fichero
+                hash_object.update(data) # Actualiza el hash con los datos leídos
 
         return hash_object.hexdigest() # Devuelve el hash en formato hexadecimal
     
     def upload(
-        self, blobTransfer: IceDrive.DataTransfer , current: Ice.Current = None
+        self, blobTransfer: DataTransfer , current: Ice.Current = None
     ) -> str:
         """Register a DataTransfer object to upload a file to the service."""
         try:
             blob_id = self.calculate_blob_id(blobTransfer) # Genera un identificador para el blob
             blob_path = Path(self.directory_path).joinpath(blob_id) #obtener ruta absoluta del fichero
             if blob_id not in self.linked_blobs: # Si el blob no está almacenado
-                with open(blob_path, 'wb') as f: #abrir fichero en modo escritura binaria
+                with open(blob_path, 'wb') as f, open(blobTransfer, 'rb') as bt: #abrir fichero en modo escritura binaria y lectura binaria
                     while True: # Mientras haya datos
-                        data = blobTransfer.read(4096) # Lee 4096 bytes del blob
+                        data = bt.read(4096) # Lee 4096 bytes del blob
                         if not data: # Si no hay datos, se cierra el fichero
+                            blob_path.close() # Se cierra el fichero
+                            blobTransfer.close() # Se cierra el objeto DataTransfer
                             break # Se cierra el fichero
                         f.write(data) # Escribe los datos en el fichero
                 self.linked_blobs[blob_id] = 1 # Se marca como vinculado
-                self.escribirEnJson() #guardar el diccionario de enlaces
+                self.escribirEnJson()
+            else:
+                self.link(blob_id)
+                #self.escribirEnJson() #guardar el diccionario de enlaces
+                blobTransfer.close() # Se cierra el objeto DataTransfer
                 return blob_id # Devuelve el identificador del blob
         except Exception as e: # Si se produce un error
             raise IceDrive.FailedToReadData(f"Error al leer datos del blob: {str(e)}") # Si no se pueden leer los datos, se lanza una excepción
