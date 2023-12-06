@@ -5,9 +5,10 @@ import Ice
 import IceDrive 
 import os
 import json
+import hashlib
 from pathlib import Path
 
-class DataTransfer(IceDrive.DataTransfer): #DUDA DE SI ES SOLO UN FICHERO
+class DataTransfer(IceDrive.DataTransfer):
     """Implementation of an IceDrive.DataTransfer interface."""
 
     def __init__(self, source):
@@ -40,7 +41,7 @@ class BlobService(IceDrive.BlobService):
             self.linked_blobs = {} # Diccionario de blobs vinculados
         else:
             self.leerDeJson()
-
+    '''
     def _get_blob_data(self, blob: IceDrive.DataTransferPrx, current: Ice.Current) -> bytes:
         """Lee los datos del blob."""
         data_transfer = blob # Obtiene el proxy del objeto DataTransfer
@@ -76,16 +77,16 @@ class BlobService(IceDrive.BlobService):
         data_transfer_impl = DataTransfer(blob_data) # Crea un objeto DataTransfer
         data_transfer_proxy = current.adapter.addWithUUID(data_transfer_impl) # Obtiene el proxy del objeto DataTransfer
         return IceDrive.DataTransferPrx.uncheckedCast(data_transfer_proxy) # Devuelve el proxy del objeto DataTransfer
-
+    '''
 
     #SI
     def escribirEnJson(self):
-        with open(self.rutaFicheroJson, 'w') as f:
-            json.dump(self.linked_blobs, f)
+        with open(self.rutaFicheroJson, 'w') as f: #abrir fichero en modo escritura
+            json.dump(self.linked_blobs, f) #guardar el diccionario de enlaces
     #SI
     def leerDeJson(self):
-        with open(self.rutaFicheroJson, 'r') as f:
-            self.linked_blobs = json.load(f)
+        with open(self.rutaFicheroJson, 'r') as f: #abrir fichero en modo lectura
+            self.linked_blobs = json.load(f) #cargar el diccionario de enlaces
     #SI
     def link(self, blob_id: str, current: Ice.Current = None) -> None:
         """Mark a blob_id file as linked in some directory."""
@@ -107,32 +108,49 @@ class BlobService(IceDrive.BlobService):
         else:
             raise IceDrive.UnknownBlob("Blob no encontrado") # Si no está almacenado, se lanza una excepción
 
+    def calculate_blob_id(self, blob_transfer: IceDrive.DataTransfer) -> str:
+        """Calcula el identificador único del blob basado en su contenido."""
+        hash_object = hashlib.sha256() # Crea un objeto hash
+        while True: # Mientras haya datos
+            data = blob_transfer.read(4096) # Lee 4096 bytes del blob
+            if not data: # Si no hay datos, se cierra el fichero
+                break # Se cierra el fichero
+            hash_object.update(data) # Actualiza el hash con los datos leídos
+
+        return hash_object.hexdigest() # Devuelve el hash en formato hexadecimal
+    
     def upload(
-        self, blob: IceDrive.DataTransferPrx, current: Ice.Current = None
+        self, blobTransfer: IceDrive.DataTransfer , current: Ice.Current = None
     ) -> str:
         """Register a DataTransfer object to upload a file to the service."""
-        #Cuando me mandan el blob, hacer bucle hacendo reads en un archivo temporal e ir escribiendo en mi archivo normal hasta recibirlo entero (devuelve cadena vacía) 
-        # y luego cerrar el archivo temporal 
-        #libreria archivos temporales de python tempfile
-        # le tengo q decir q no borre el archivo temporal delete_on_close=False
-        #todo esto en get_blob_data
         try:
-            blob_data = self._get_blob_data(blob, current) # Obtiene los datos del blob
-            blob_id = self._generate_blob_id(blob_data) # Genera un identificador para el blob
-            self.blob_storage[blob_id] = blob_data # Almacena el blob
-            self.linked_blobs[blob_id] = False # Marca el blob como no vinculado
-            return blob_id # Devuelve el identificador del blob
-        except Exception as e:
-            raise IceDrive.FailedToReadData(str(e)) # Si no se pueden leer los datos, se lanza una excepción
+            blob_id = self.calculate_blob_id(blobTransfer) # Genera un identificador para el blob
+            blob_path = Path(self.directory_path).joinpath(blob_id) #obtener ruta absoluta del fichero
+            if blob_id not in self.linked_blobs: # Si el blob no está almacenado
+                with open(blob_path, 'wb') as f: #abrir fichero en modo escritura binaria
+                    while True: # Mientras haya datos
+                        data = blobTransfer.read(4096) # Lee 4096 bytes del blob
+                        if not data: # Si no hay datos, se cierra el fichero
+                            break # Se cierra el fichero
+                        f.write(data) # Escribe los datos en el fichero
+                self.linked_blobs[blob_id] = 1 # Se marca como vinculado
+                self.escribirEnJson() #guardar el diccionario de enlaces
+                return blob_id # Devuelve el identificador del blob
+        except Exception as e: # Si se produce un error
+            raise IceDrive.FailedToReadData(f"Error al leer datos del blob: {str(e)}") # Si no se pueden leer los datos, se lanza una excepción
 
     def download(
         self, blob_id: str, current: Ice.Current = None
-    ) -> IceDrive.DataTransferPrx:
+    ) -> IceDrive.DataTransfer:
         """Return a DataTransfer objet to enable the client to download the given blob_id."""
-        if blob_id in self.blob_storage: # Si el blob está almacenado
-            blob_data = self.blob_storage[blob_id] # Obtiene los datos del blob
-            return self._create_data_transfer(blob_data, current) # Crea un objeto DataTransfer
+        if blob_id in self.linked_blobs: # Si el blob está almacenado
+            blob_path = Path(self.directory_path).joinpath(blob_id) #obtener ruta absoluta del fichero
+            if os.path.exists(blob_path): # Si el blob está almacenado
+                blob_transfer = DataTransfer(blob_path) # Crea un objeto DataTransfer
+                return blob_transfer # Devuelve el proxy del objeto DataTransfer
+            else:
+                raise IceDrive.UnknownBlob("Blob no encontrado en disco") # Si no está almacenado, se lanza una excepción
         else:
-            raise IceDrive.UnknownBlob("Blob no encontrado") # Si no está almacenado, se lanza una excepción
-        
+            raise IceDrive.UnknownBlob("Blob no encontrado en memoria") # Si no está almacenado, se lanza una excepción
+
         #Crear dicrectorio al mismo nivel de icedrive_blob para pruebas unitarias

@@ -16,10 +16,10 @@ class BlobApp(Ice.Application):
         """Execute the code for the BlobApp class."""
         adapter = self.communicator().createObjectAdapter("BlobAdapter")
         adapter.activate()
-
         directory = self.communicator().getProperties().getProperty("directoryName")
         servant = BlobService(directory) #debo pasarle directorio
-        servant_proxy = adapter.addWithUUID(servant)
+        #servant_proxy = adapter.addWithUUID(servant)
+        servant_proxy = adapter.add(servant, self.communicator().stringToIdentity("BlobService")) 
 
         logging.info("Proxy: %s", servant_proxy)
 
