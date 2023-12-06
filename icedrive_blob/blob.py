@@ -3,7 +3,6 @@
 import Ice
 
 import IceDrive 
-import hashlib
 import os
 import json
 from pathlib import Path

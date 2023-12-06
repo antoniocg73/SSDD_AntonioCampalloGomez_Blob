@@ -1,5 +1,4 @@
 from icedrive_blob.blob import BlobService
-import json
 from pathlib import Path
 
 rutaFicheroJson = Path("pruebas").joinpath("enlaces.json") #obtener ruta absoluta del fichero de tipo de objeto Path
