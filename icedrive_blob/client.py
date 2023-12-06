@@ -1,7 +1,7 @@
 import Ice
 import sys
 Ice.loadSlice("icedrive_blob/icedrive.ice")
-import IceDrive
+import IceDrive 
 
 class ClientApp(Ice.Application):
     """Implementation of the Ice.Application for the client."""

@@ -1,10 +1,12 @@
 import unittest
 from unittest.mock import Mock
-import Ice
-import IceDrive 
 from icedrive_blob.blob import BlobService
 from pathlib import Path
 import os
+import Ice
+Ice.loadSlice("icedrive_blob/icedrive.ice")
+import IceDrive 
+
 class TestBlobService(unittest.TestCase):
     def setUp(self):
         self.b = BlobService("pruebas")
