@@ -8,13 +8,13 @@ import IceDrive
 
 class DataTransferDouble:
     def __init__(self):
-        self.output = b"Hello world\n"
+        self.output = "Hello world\n"
         self.index = -1
     def read(self, size):
         self.index += 1
         if self.index >= len(self.output) - 1:
             return b""
-        return self.output[self.index]
+        return self.output[self.index].encode()
 
     def close(self):
         pass

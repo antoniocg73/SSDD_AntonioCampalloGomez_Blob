@@ -91,7 +91,7 @@ class BlobService(IceDrive.BlobService):
                 print("Ya estaba almacenado") 
             return blob_id # Devuelve el hash del fichero
         except Exception as e: # Si se produce un error
-            raise IceDrive.FailedToReadData(f"Error al leer datos del blob: {str(e)}") # Si no se pueden leer los datos, se lanza una excepción
+            raise e#IceDrive.FailedToReadData() # Si no se pueden leer los datos, se lanza una excepción
 
     def download(self, blob_id: str, current: Ice.Current = None) -> IceDrive.DataTransferPrx:
         """Return a DataTransfer objet to enable the client to download the given blob_id."""
