@@ -28,7 +28,7 @@ class DataTransfer(IceDrive.DataTransfer):
         if not self.file.closed: # Si no está cerrado
             self.file.close() # Se cierra el archivo
             current.adapter.remove(current.id) #revisar si es current.id  # Se elimina el objeto DataTransfer del adaptador
-                        
+
 class BlobService(IceDrive.BlobService): 
     """Implementation of an IceDrive.BlobService interface."""
 
@@ -69,10 +69,8 @@ class BlobService(IceDrive.BlobService):
                 self.escribirEnJson()
         else:
             raise IceDrive.UnknownBlob("Blob no encontrado") # Si no está almacenado, se lanza una excepción
-
-    def upload(
-        self, blob: IceDrive.DataTransferPrx , current: Ice.Current = None
-    ) -> str:
+    #blob: IceDrive.DataTransferPrx
+    def upload(self, blob: IceDrive.DataTransferPrx , current: Ice.Current = None) -> str:
         """Register a DataTransfer object to upload a file to the service."""
         try:
             hash_object = hashlib.sha256() # Crea un objeto hash
@@ -95,9 +93,7 @@ class BlobService(IceDrive.BlobService):
         except Exception as e: # Si se produce un error
             raise IceDrive.FailedToReadData(f"Error al leer datos del blob: {str(e)}") # Si no se pueden leer los datos, se lanza una excepción
 
-    def download(
-        self, blob_id: str, current: Ice.Current = None
-    ) -> IceDrive.DataTransferPrx:
+    def download(self, blob_id: str, current: Ice.Current = None) -> IceDrive.DataTransferPrx:
         """Return a DataTransfer objet to enable the client to download the given blob_id."""
         if blob_id in self.linked_blobs: # Si el blob está almacenado
             blob_path = Path(self.directory_path).joinpath(blob_id) #obtener ruta absoluta del fichero
@@ -108,5 +104,3 @@ class BlobService(IceDrive.BlobService):
                 raise IceDrive.UnknownBlob("Blob no encontrado en disco") # Si no está almacenado, se lanza una excepción
         else:
             raise IceDrive.UnknownBlob("Blob no encontrado en memoria") # Si no está almacenado, se lanza una excepción
-
-        #Crear dicrectorio al mismo nivel de icedrive_blob para pruebas unitarias
