@@ -13,7 +13,7 @@ class ClientApp(Ice.Application):
 
         base = self.communicator().stringToProxy("BlobService -t -e 1.1:tcp -h 127.0.0.1 -p 2000 -t 60000")
         blob = IceDrive.BlobServicePrx.checkedCast(base)
-        blob.link("pruebaLink")
+        blob.unlink("pruebaLink")
         return 0
 
 def client():
