@@ -3,6 +3,7 @@ from icedrive_blob.blob import BlobService
 from pathlib import Path
 import os
 import Ice
+
 import json
 from pathlib import Path
 Ice.loadSlice("icedrive_blob/icedrive.ice")
@@ -65,5 +66,11 @@ class TestBlobService(unittest.TestCase):
         # Verifica que el blob_id ya no está en linked_blobs
         self.assertNotIn(blob_id, self.b.linked_blobs)
 
+    def test_upload_unlink(self):
+        blob = DataTransferDouble() # Crea un objeto simulado
+        blob_id = self.b.upload(blob) # Llama a la función upload
+        self.assertIn(blob_id, self.b.linked_blobs) # Verifica que el blob_id está en linked_blobs
+        self.b.unlink(blob_id) # Llama a la función unlink
+        self.assertNotIn(blob_id, self.b.linked_blobs) # Verifica que el blob_id ya no está en linked_blobs
 if __name__ == '__main__':
     unittest.main()

@@ -28,12 +28,12 @@ class DataTransfer(IceDrive.DataTransfer):
         """Close the currently opened file."""
         if not self.file.closed: # Si no está cerrado
             self.file.close() # Se cierra el archivo
-            current.adapter.remove(current.id) #revisar si es current.id  # Se elimina el objeto DataTransfer del adaptador
+            current.adapter.remove(current.id) # Se elimina el objeto DataTransfer del adaptador
 
 class BlobService(IceDrive.BlobService): 
     """Implementation of an IceDrive.BlobService interface."""
 
-    #SI
+    
     def __init__(self, directory_path):
         self.directory_path = directory_path # Almacena la ruta al directorio   
         self.rutaFicheroJson = Path(directory_path).joinpath("enlaces.json") #obtener ruta absoluta del fichero de tipo de objeto Path
@@ -42,15 +42,15 @@ class BlobService(IceDrive.BlobService):
             self.linked_blobs = {} # Diccionario de blobs vinculados
         else:
             self.leerDeJson()
-    #SI
+    
     def escribirEnJson(self):
         with open(self.rutaFicheroJson, 'w') as f: #abrir fichero en modo escritura
             json.dump(self.linked_blobs, f) #guardar el diccionario de enlaces
-    #SI
+    
     def leerDeJson(self):
         with open(self.rutaFicheroJson, 'r') as f: #abrir fichero en modo lectura
             self.linked_blobs = json.load(f) #cargar el diccionario de enlaces
-    #SI
+    
     def link(self, blob_id: str, current: Ice.Current = None) -> None:
         """Mark a blob_id file as linked in some directory."""
         if blob_id in self.linked_blobs: # Si el blob está almacenado 
@@ -58,7 +58,7 @@ class BlobService(IceDrive.BlobService):
             self.escribirEnJson()
         else:
             raise IceDrive.UnknownBlob(blob_id) # Si no está almacenado, se lanza una excepción
-    #SI
+    
     def unlink(self, blob_id: str, current: Ice.Current = None) -> None:
         """Mark a blob_id as unlinked (removed) from some directory."""
         if blob_id in self.linked_blobs: # Si el blob está almacenado
@@ -71,7 +71,7 @@ class BlobService(IceDrive.BlobService):
             self.escribirEnJson()
         else:
             raise IceDrive.UnknownBlob(blob_id) # Si no está almacenado, se lanza una excepción
-    #blob: IceDrive.DataTransferPrx
+
     def upload(self, blob: IceDrive.DataTransferPrx , current: Ice.Current = None) -> str:
         """Register a DataTransfer object to upload a file to the service."""
         try:

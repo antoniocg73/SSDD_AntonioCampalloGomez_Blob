@@ -28,5 +28,5 @@ b = BlobService("pruebas")
 blob = DataTransferDouble() # Crea un objeto simulado
 blob_id = b.upload(blob) # Llama a la función upload
 print(blob_id)
-b.link("f2271c0f987c8a791fd0b63a64d3d2b86556f5c254fde953d07377462db5b6c0")
+#b.link("f2271c0f987c8a791fd0b63a64d3d2b86556f5c254fde953d07377462db5b6c0")
 
