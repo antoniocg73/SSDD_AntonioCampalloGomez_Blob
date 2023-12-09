@@ -61,7 +61,6 @@ class ClientApp(Ice.Application):
                     file_name = input("Enter the name of the file to upload: ")
                     blob_path = Path(blob.directory_path).joinpath(file_name) # Calcula la ruta del archivo
                     data_transfer = DataTransferClient(blob_path)
-                    
                     blob_id = blob.upload(data_transfer)
                     print("File uploaded successfully.")
                     print(f"Blob ID: {blob_id}")

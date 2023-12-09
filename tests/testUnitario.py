@@ -4,9 +4,11 @@ from pathlib import Path
 import os
 import Ice
 import json
+import hashlib
 Ice.loadSlice("icedrive_blob/icedrive.ice")
 import IceDrive 
 
+#tests sin Ice aplicado, comentar lineas de download para que funcionen
 class DataTransferDouble:
     def __init__(self):
         self.output = "Hello world\n"
@@ -27,6 +29,13 @@ class TestBlobService(unittest.TestCase):
         with open(rutaFicheroJson, 'w') as f:
             json.dump(linked_blobs, f)
         self.b = BlobService("pruebas")
+
+    def calculate_hash(self, file_path):
+        sha256_hash = hashlib.sha256()
+        with open(file_path,"rb") as f:
+            for byte_block in iter(lambda: f.read(4096),b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
 
     def test_link(self):
         self.b.link("pruebaLink")
@@ -70,5 +79,13 @@ class TestBlobService(unittest.TestCase):
         self.assertIn(blob_id, self.b.linked_blobs) # Verifica que el blob_id está en linked_blobs
         self.b.unlink(blob_id) # Llama a la función unlink
         self.assertNotIn(blob_id, self.b.linked_blobs) # Verifica que el blob_id ya no está en linked_blobs
+    
+    def test_sha256(self):
+        downloaded_blob = self.b.download("pruebaLink")  # Llama a la función download
+        file_path_origin = Path(self.b.directory_path).joinpath("pruebaLink")
+        hash_origin = self.calculate_hash(file_path_origin)
+        hash_downloaded = self.calculate_hash(downloaded_blob.file_path)
+        self.assertEqual(hash_origin, hash_downloaded)
+
 if __name__ == '__main__':
     unittest.main()
