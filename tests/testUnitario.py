@@ -3,9 +3,7 @@ from icedrive_blob.blob import BlobService
 from pathlib import Path
 import os
 import Ice
-
 import json
-from pathlib import Path
 Ice.loadSlice("icedrive_blob/icedrive.ice")
 import IceDrive 
 

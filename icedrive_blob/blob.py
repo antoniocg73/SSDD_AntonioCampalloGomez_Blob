@@ -88,7 +88,6 @@ class BlobService(IceDrive.BlobService):
             if blob_id not in self.linked_blobs:
                 os.rename(temp_file.name, Path(self.directory_path).joinpath(blob_id)) # Renombra el fichero temporal
                 self.linked_blobs.update({blob_id: 0}) # Añade el blob al diccionario de blobs vinculados
-                #self.link(blob_id)
                 self.escribirEnJson()
             else:
                 #os.remove(temp_file)
@@ -103,7 +102,8 @@ class BlobService(IceDrive.BlobService):
             blob_path = Path(self.directory_path).joinpath(blob_id) #obtener ruta absoluta del fichero
             if os.path.exists(blob_path): # Si el blob está almacenado
                 blob_transfer = DataTransfer(blob_path) # Crea un objeto DataTransfer
-                return blob_transfer # Devuelve el proxy del objeto DataTransfer
+                prx = current.adapter.addWithUUID(blob_transfer) # Añade el objeto DataTransfer al adaptador
+                return IceDrive.DataTransferPrx.uncheckedCast(prx) # Devuelve el objeto DataTransfer
             else:
                 raise IceDrive.UnknownBlob(blob_path.name) # Si no está almacenado, se lanza una excepción
         else:
