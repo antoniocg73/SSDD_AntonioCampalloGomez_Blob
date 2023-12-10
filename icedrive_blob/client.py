@@ -2,7 +2,6 @@ import Ice
 import sys
 import os
 import hashlib
-from icedrive_blob.blob import BlobService
 from pathlib import Path
 Ice.loadSlice("icedrive_blob/icedrive.ice")
 import IceDrive 

@@ -24,7 +24,7 @@ class DataTransfer(IceDrive.DataTransfer):
         try:
             data = self.file.read(size) # Lee size bytes del archivo
             return data
-        except Exception as e: # Si se produce un error
+        except Exception: # Si se produce un error
             raise IceDrive.FailedToReadData() # Si no se pueden leer los datos, se lanza una excepción
 
     def close(self, current: Ice.Current = None) -> None:
@@ -96,7 +96,7 @@ class BlobService(IceDrive.BlobService):
                 #os.remove(temp_file)
                 print("It is already uploaded.") 
             return blob_id # Devuelve el hash del fichero
-        except Exception as e: # Si se produce un error
+        except Exception: # Si se produce un error
             raise IceDrive.FailedToReadData() # Si no se pueden leer los datos, se lanza una excepción
 
     def download(self, blob_id: str, current: Ice.Current = None) -> IceDrive.DataTransferPrx:

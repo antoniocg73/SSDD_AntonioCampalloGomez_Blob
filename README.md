@@ -26,11 +26,16 @@ Le añado al directory el directorio del blob.config, el de pruebas y en el retu
 Añadí dos métodos, "escribirEnJson" y "leerDeJson". Estos métodos me ayudan a atualizar todo lo que tiene que ver con el número de enlaces de los blobs sin problema de que se borre el contenido después de finalizar la ejecución.
 - A la clase DataTransfer le añadí un init, completé sus métodos y en close su respectiva gestión de Ice.
 
-## Tests unitarios
-Dentro de la carpeta tests tengo mi archivo de pruebas llamado testUnitario.py.
+## Tests unitarios y main.py
+- Dentro de la carpeta tests tengo mi archivo de pruebas llamado testUnitario.py.
 Los test realizados son sin haber aplicado Ice, por lo tanto habria que cambiar todo lo de Ice añadido en Blob para poder probarlo y que, como yo he podido observar durante mis pruebas, funciona.
+- Al empezar, hice antes de los tests unitarios una clase main donde iba probando, no la he borrado por dejar constancia de mis primeras pruebas.
 
 ## Clase ClientApp y DataTransferClient
 - La clase ClientApp es el cliente interactivo que me cree para poder probar que funcionaba todo implementando Ice. 
 - La clase DataTransferClient es una copia del de la clase BlobService.
 
+## Pasos para ejecutar
+1. pip install -e . en el caso de que no se tenga la aplicación instalada.
+2. Arrancamos el servidor con "icedrive-blob".
+3. Arrancamos en otra terminal el cliente con "icedrive-client".

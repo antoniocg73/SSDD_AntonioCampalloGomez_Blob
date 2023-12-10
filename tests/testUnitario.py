@@ -6,7 +6,6 @@ import Ice
 import json
 import hashlib
 Ice.loadSlice("icedrive_blob/icedrive.ice")
-import IceDrive 
 
 #tests sin Ice aplicado, comentar lineas de download para que funcionen
 class DataTransferDouble:
