@@ -13,6 +13,8 @@ One of the first things that you need to setup when you clone this branch is to 
 - Projects URL humepage
 
 # Documentación BlobService - Antonio Campallo Gómez
+## Indicación previa
+Al principio todo lo ejecutaba en windows pero el upload me daba un error "WinError", por lo que me tuve que cambiar a Linux.
 ## Edición de blob/config y pyproject.toml
  - Edité el blob.config de forma que el "BlobAdapter" se conecte al puerto 2000 y el nombre del directorio sea "pruebas". Esto lo hago debido a que quiero que los archivos se guarden en la carpeta "pruebas" del proyecto.
  - Luego, dentro del pyproject.toml cambié las cosas como el nombre, el correo y eso y además, añadí que para invocar al cliente se tenga que escribir por terminal después de inicializar el servidor esto: "icedrive-client". Esto llama a mi clase cliente.
