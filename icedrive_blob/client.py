@@ -22,7 +22,7 @@ class DataTransferClient(IceDrive.DataTransfer):
         try:
             data = self.file.read(size) # Lee size bytes del archivo
             return data
-        except Exception as e: # Si se produce un error
+        except Exception: # Si se produce un error
             raise IceDrive.FailedToReadData() # Si no se pueden leer los datos, se lanza una excepción   
 
     def close(self, current: Ice.Current = None) -> None:
@@ -65,33 +65,35 @@ class ClientApp(Ice.Application):
                 file_name = input("Enter the name of the file to upload: ")
                 directory_name = input("Enter the name of the directory: ")
                 blob_path = Path(directory_name).joinpath(file_name) # Calcula la ruta del archivo
+                if os.path.exists(blob_path): # Si el archivo no existe
+                    hash_object = hashlib.sha256() # Crea un objeto hash
+                    with open(blob_path, "rb") as original: # Abre el archivo en modo lectura binaria
+                        data = original.read()
+                        if not data:
+                            original.close()
+                            break
+                        hash_object.update(data) # Actualiza el hash con los datos leídos
+                    blob_id_original = hash_object.hexdigest() # Devuelve el hash en formato hexadecimal
 
-                hash_object = hashlib.sha256() # Crea un objeto hash
-                with open(blob_path, "rb") as original: # Abre el archivo en modo lectura binaria
-                    data = original.read()
-                    if not data:
-                        original.close()
-                        break
-                    hash_object.update(data) # Actualiza el hash con los datos leídos
-                blob_id_original = hash_object.hexdigest() # Devuelve el hash en formato hexadecimal
-
-                data_transfer = DataTransferClient(blob_path)
-                #adapter = self.communicator().createObjectAdapter("BlobAdapter") # Crea un adaptador de objetos
-                adapter = self.communicator().createObjectAdapterWithEndpoints("BlobAdapter", "default -p 10000") # Crea un adaptador de objetos
-                adapter.activate() # Activa el adaptador
-                servant_proxy = adapter.addWithUUID(data_transfer) # Añade el objeto al adaptador
-                data_transfer_prx = IceDrive.DataTransferPrx.checkedCast(servant_proxy) # Convierte el proxy a un objeto de tipo DataTransferPrx
-                blob_id = blob.upload(data_transfer_prx) # Llama a la función upload
-                adapter.destroy() # Destruye el adaptador
-            
-                if blob_id == blob_id_original:
-                    print("File uploaded successfully or is already uploaded.")
-                    print(f"Blob ID: {blob_id}")
+                    data_transfer = DataTransferClient(blob_path)
+                    #adapter = self.communicator().createObjectAdapter("BlobAdapter") # Crea un adaptador de objetos
+                    adapter = self.communicator().createObjectAdapterWithEndpoints("BlobAdapter", "default -p 10000") # Crea un adaptador de objetos
+                    adapter.activate() # Activa el adaptador
+                    servant_proxy = adapter.addWithUUID(data_transfer) # Añade el objeto al adaptador
+                    data_transfer_prx = IceDrive.DataTransferPrx.checkedCast(servant_proxy) # Convierte el proxy a un objeto de tipo DataTransferPrx
+                    blob_id = blob.upload(data_transfer_prx) # Llama a la función upload
+                    adapter.destroy() # Destruye el adaptador
+                
+                    if blob_id == blob_id_original:
+                        print("File uploaded successfully or is already uploaded.")
+                        print(f"Blob ID: {blob_id}")
+                    else:
+                        print("File uploaded successfully but the blob ID is different.")
+                        print(f"Blob ID: {blob_id}")
+                        print(f"Original blob ID: {blob_id_original}")
                 else:
-                    print("File uploaded successfully but the blob ID is different.")
-                    print(f"Blob ID: {blob_id}")
-                    print(f"Original blob ID: {blob_id_original}")
-
+                    print("File not found.")
+                    
             elif choice == "2":
                 blob_id = input("Enter the ID of the blob to download: ")
                 data_transfer_download = blob.download(blob_id) # Llama a la función download
