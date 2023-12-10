@@ -34,11 +34,7 @@ class DataTransferClient(IceDrive.DataTransfer):
 
 class ClientApp(Ice.Application):
     """Implementation of the Ice.Application for the client."""
-    '''
-    def __init__(self):
-        directory_name = input("Enter the name of the diretory: ")
-        self.b = BlobService(directory_name)
-    '''
+    
     def calculate_hash(self, file_path):
         sha256_hash = hashlib.sha256()
         with open(file_path,"rb") as f:
