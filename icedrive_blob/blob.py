@@ -2,6 +2,7 @@
 
 import Ice
 import IceDrive 
+import shutil
 import os
 import json
 import hashlib
@@ -75,7 +76,7 @@ class BlobService(IceDrive.BlobService):
         else:
             raise IceDrive.UnknownBlob(blob_id) # Si no está almacenado, se lanza una excepción
 
-    def upload(self, blob: IceDrive.DataTransferPrx , current: Ice.Current = None) -> str:
+    def upload(self, user: IceDrive.UserPrx, blob: IceDrive.DataTransferPrx , current: Ice.Current = None) -> str:
         """Register a DataTransfer object to upload a file to the service."""
         try:
             hash_object = hashlib.sha256() # Crea un objeto hash
@@ -89,25 +90,34 @@ class BlobService(IceDrive.BlobService):
                 temp_file.write(data) # Escribe los datos en el fichero
             blob_id = hash_object.hexdigest() # Devuelve el hash en formato hexadecimal
             if blob_id not in self.linked_blobs:
-                os.rename(temp_file.name, Path(self.directory_path).joinpath(blob_id)) # Renombra el fichero temporal
+                shutil.move(temp_file.name, Path(self.directory_path).joinpath(blob_id)) # Renombra el fichero temporal
                 self.linked_blobs.update({blob_id: 0}) # Añade el blob al diccionario de blobs vinculados
                 self.escribirEnJson()
             else:
                 #os.remove(temp_file)
                 print("It is already uploaded.") 
             return blob_id # Devuelve el hash del fichero
-        except Exception: # Si se produce un error
+        
+        except IceDrive.TemporaryUnavailable:
+            raise IceDrive.TemporaryUnavailable()  # Manejar la excepción TemporaryUnavailable
+
+        except Exception as e: # Si se produce un error
             raise IceDrive.FailedToReadData() # Si no se pueden leer los datos, se lanza una excepción
 
-    def download(self, blob_id: str, current: Ice.Current = None) -> IceDrive.DataTransferPrx:
+    def download(self, user: IceDrive.UserPrx, blob_id: str, current: Ice.Current = None) -> IceDrive.DataTransferPrx:
         """Return a DataTransfer objet to enable the client to download the given blob_id."""
-        if blob_id in self.linked_blobs: # Si el blob está almacenado
-            blob_path = Path(self.directory_path).joinpath(blob_id) #obtener ruta absoluta del fichero
-            if os.path.exists(blob_path): # Si el blob está almacenado
-                blob_transfer = DataTransfer(blob_path) # Crea un objeto DataTransfer
-                prx = current.adapter.addWithUUID(blob_transfer) # Añade el objeto DataTransfer al adaptador
-                return IceDrive.DataTransferPrx.uncheckedCast(prx) # Devuelve el objeto DataTransfer
+        #authentication_proxy = self.getAuthenticationProxy() # Obtiene el proxy del servicio de autenticación
+        #if authentication_proxy.verifyUser(user):     # Si el usuario está autenticado   
+        try:
+            if blob_id in self.linked_blobs: # Si el blob está almacenado
+                blob_path = Path(self.directory_path).joinpath(blob_id) #obtener ruta absoluta del fichero
+                if os.path.exists(blob_path): # Si el blob está almacenado
+                    blob_transfer = DataTransfer(blob_path) # Crea un objeto DataTransfer
+                    prx = current.adapter.addWithUUID(blob_transfer) # Añade el objeto DataTransfer al adaptador
+                    return IceDrive.DataTransferPrx.uncheckedCast(prx) # Devuelve el objeto DataTransfer
+                else:
+                    raise IceDrive.UnknownBlob(blob_path.name) # Si no está almacenado, se lanza una excepción
             else:
-                raise IceDrive.UnknownBlob(blob_path.name) # Si no está almacenado, se lanza una excepción
-        else:
-            raise IceDrive.UnknownBlob(blob_id) # Si no está almacenado, se lanza una excepción
+                raise IceDrive.UnknownBlob(blob_id) # Si no está almacenado, se lanza una excepción
+        except IceDrive.TemporaryUnavailable:
+            raise IceDrive.TemporaryUnavailable()
