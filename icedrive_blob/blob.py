@@ -104,7 +104,7 @@ class BlobService(IceDrive.BlobService):
             except IceDrive.TemporaryUnavailable:
                 raise IceDrive.TemporaryUnavailable()  # Manejar la excepción TemporaryUnavailable
 
-            except Exception as e: # Si se produce un error
+            except Exception: # Si se produce un error
                 raise IceDrive.FailedToReadData() # Si no se pueden leer los datos, se lanza una excepción
         else:
             print("User is not verified.")

@@ -3,8 +3,9 @@ import sys
 import os
 import hashlib
 from pathlib import Path
+import IceDrive
 Ice.loadSlice("icedrive_blob/icedrive.ice")
-import IceDrive 
+ 
 
 class DataTransferClient(IceDrive.DataTransfer):
     """Implementation of an IceDrive.DataTransfer interface."""

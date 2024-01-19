@@ -31,7 +31,7 @@ class BlobApp(Ice.Application):
         
         discovery_servant = Discovery() # Se crea el servant
         discovery_proxy = adapter.addWithUUID(discovery_servant) # Se añade el servant al adaptador
-        discovery_topic = topic.subscribeAndGetPublisher({}, discovery_proxy) # Se suscribe el servant al topic
+        #discovery_topic = topic.subscribeAndGetPublisher({}, discovery_proxy) # Se suscribe el servant al topic
         discoveryProxy = IceDrive.DiscoveryPrx.uncheckedCast(topic.getPublisher()) # Se obtiene el proxy del servant
         
         directory = self.communicator().getProperties().getProperty("directoryName") # Obtiene el nombre del directorio
