@@ -17,8 +17,7 @@ One of the first things that you need to setup when you clone this branch is to 
 En la revisión de la entrega 1 se me recomendó para que al profesor le funcione editar una cosa del código, pero de esa forma a mi no me funciona. Por ende, solo cambié el os.rename por el shutil.move. 
 ## Parte realizada
 Solamente he hecho hasta anunciarme cada 5 segundos. las querys no me ha dado tiempo.
-##
-Para ejecutar poner "./run_icestorm" y cuando esto se haga, dentro del proyecto en general, escribir "icedrive-blob".
+- Para ejecutar poner "./run_icestorm" y cuando esto se haga, dentro del proyecto en general, escribir "icedrive-blob".
 
 # Documentación BlobService - Antonio Campallo Gómez
 ## Indicación previa
