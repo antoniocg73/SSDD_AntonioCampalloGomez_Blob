@@ -8,6 +8,7 @@ import json
 import hashlib
 from pathlib import Path
 import tempfile
+from .discovery import Discovery
 
 class DataTransfer(IceDrive.DataTransfer):
     """Implementation of an IceDrive.DataTransfer interface."""
@@ -38,9 +39,10 @@ class BlobService(IceDrive.BlobService):
     """Implementation of an IceDrive.BlobService interface."""
 
     
-    def __init__(self, directory_path):
+    def __init__(self, directory_path, discovery: Discovery):
         self.directory_path = directory_path # Almacena la ruta al directorio   
         self.rutaFicheroJson = Path(directory_path).joinpath("enlaces.json") #obtener ruta absoluta del fichero de tipo de objeto Path
+        self.discovery = discovery
         if not os.path.exists(self.rutaFicheroJson): #si no existe el fichero
             self.escribirEnJson()
             self.linked_blobs = {} # Diccionario de blobs vinculados
@@ -76,48 +78,53 @@ class BlobService(IceDrive.BlobService):
         else:
             raise IceDrive.UnknownBlob(blob_id) # Si no está almacenado, se lanza una excepción
 
-    def upload(self, user: IceDrive.UserPrx, blob: IceDrive.DataTransferPrx , current: Ice.Current = None) -> str:
+    def upload(self, user: IceDrive.UserPrx, blob: IceDrive.DataTransferPrx,  current: Ice.Current = None) -> str:
         """Register a DataTransfer object to upload a file to the service."""
-        try:
-            hash_object = hashlib.sha256() # Crea un objeto hash
-            temp_file = tempfile.NamedTemporaryFile(delete=False) # Crea un fichero temporal
-            while True:
-                data = blob.read(4096)
-                if not data:
-                    blob.close()
-                    break
-                hash_object.update(data) # Actualiza el hash con los datos leídos
-                temp_file.write(data) # Escribe los datos en el fichero
-            blob_id = hash_object.hexdigest() # Devuelve el hash en formato hexadecimal
-            if blob_id not in self.linked_blobs:
-                shutil.move(temp_file.name, Path(self.directory_path).joinpath(blob_id)) # Renombra el fichero temporal
-                self.linked_blobs.update({blob_id: 0}) # Añade el blob al diccionario de blobs vinculados
-                self.escribirEnJson()
-            else:
-                #os.remove(temp_file)
-                print("It is already uploaded.") 
-            return blob_id # Devuelve el hash del fichero
-        
-        except IceDrive.TemporaryUnavailable:
-            raise IceDrive.TemporaryUnavailable()  # Manejar la excepción TemporaryUnavailable
+        if self.discovery.getAuthentication().verifyUser(user): # Si el usuario está autenticado
+            try:
+                hash_object = hashlib.sha256() # Crea un objeto hash
+                temp_file = tempfile.NamedTemporaryFile(delete=False) # Crea un fichero temporal
+                while True:
+                    data = blob.read(4096)
+                    if not data:
+                        blob.close()
+                        break
+                    hash_object.update(data) # Actualiza el hash con los datos leídos
+                    temp_file.write(data) # Escribe los datos en el fichero
+                blob_id = hash_object.hexdigest() # Devuelve el hash en formato hexadecimal
+                if blob_id not in self.linked_blobs:
+                    shutil.move(temp_file.name, Path(self.directory_path).joinpath(blob_id)) # Renombra el fichero temporal
+                    self.linked_blobs.update({blob_id: 0}) # Añade el blob al diccionario de blobs vinculados
+                    self.escribirEnJson()
+                else:
+                    #os.remove(temp_file)
+                    print("It is already uploaded.") 
+                return blob_id # Devuelve el hash del fichero
+            
+            except IceDrive.TemporaryUnavailable:
+                raise IceDrive.TemporaryUnavailable()  # Manejar la excepción TemporaryUnavailable
 
-        except Exception as e: # Si se produce un error
-            raise IceDrive.FailedToReadData() # Si no se pueden leer los datos, se lanza una excepción
+            except Exception as e: # Si se produce un error
+                raise IceDrive.FailedToReadData() # Si no se pueden leer los datos, se lanza una excepción
+        else:
+            print("User is not verified.")
 
     def download(self, user: IceDrive.UserPrx, blob_id: str, current: Ice.Current = None) -> IceDrive.DataTransferPrx:
         """Return a DataTransfer objet to enable the client to download the given blob_id."""
-        #authentication_proxy = self.getAuthenticationProxy() # Obtiene el proxy del servicio de autenticación
-        #if authentication_proxy.verifyUser(user):     # Si el usuario está autenticado   
-        try:
-            if blob_id in self.linked_blobs: # Si el blob está almacenado
-                blob_path = Path(self.directory_path).joinpath(blob_id) #obtener ruta absoluta del fichero
-                if os.path.exists(blob_path): # Si el blob está almacenado
-                    blob_transfer = DataTransfer(blob_path) # Crea un objeto DataTransfer
-                    prx = current.adapter.addWithUUID(blob_transfer) # Añade el objeto DataTransfer al adaptador
-                    return IceDrive.DataTransferPrx.uncheckedCast(prx) # Devuelve el objeto DataTransfer
+        if self.discovery.getAuthentication().verifyUser(user): # Si el usuario está autenticado
+            try:
+                if blob_id in self.linked_blobs: # Si el blob está almacenado
+                    blob_path = Path(self.directory_path).joinpath(blob_id) #obtener ruta absoluta del fichero
+                    if os.path.exists(blob_path): # Si el blob está almacenado
+                        blob_transfer = DataTransfer(blob_path) # Crea un objeto DataTransfer
+                        prx = current.adapter.addWithUUID(blob_transfer) # Añade el objeto DataTransfer al adaptador
+                        return IceDrive.DataTransferPrx.uncheckedCast(prx) # Devuelve el objeto DataTransfer
+                    else:
+                        raise IceDrive.UnknownBlob(blob_path.name) # Si no está almacenado, se lanza una excepción
                 else:
-                    raise IceDrive.UnknownBlob(blob_path.name) # Si no está almacenado, se lanza una excepción
-            else:
-                raise IceDrive.UnknownBlob(blob_id) # Si no está almacenado, se lanza una excepción
-        except IceDrive.TemporaryUnavailable:
-            raise IceDrive.TemporaryUnavailable()
+                    raise IceDrive.UnknownBlob(blob_id) # Si no está almacenado, se lanza una excepción
+            except IceDrive.TemporaryUnavailable:
+                raise IceDrive.TemporaryUnavailable()
+        else:
+            print("User is not verified.")
+

@@ -12,6 +12,12 @@ One of the first things that you need to setup when you clone this branch is to 
 - Project dependencies
 - Projects URL humepage
 
+# Documentación Entrega 2 - Antonio Campallo Gómez
+## Parte realizada
+Solamente he hecho hasta anunciarme cada 5 segundos. las querys no me ha dado tiempo.
+##
+Para ejecutar poner "./run_icestorm" y cuando esto se haga, dentro del proyecto en general, escribir "icedrive-blob".
+
 # Documentación BlobService - Antonio Campallo Gómez
 ## Indicación previa
 Al principio todo lo ejecutaba en windows pero el upload me daba un error "WinError", por lo que me tuve que cambiar a Linux.

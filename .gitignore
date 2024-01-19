@@ -2,3 +2,5 @@
 *.pyc
 __pycache__
 my_environment/
+IceStorm/
+```

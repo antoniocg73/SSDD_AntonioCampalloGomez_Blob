@@ -19,7 +19,7 @@ class BlobApp(Ice.Application):
     def run(self, args: List[str]) -> int:
         """Execute the code for the BlobApp class."""        
         properties = self.communicator().getProperties() # Obtiene las propiedades del comunicador
-        topic_name = properties.getProperty("DiscoveryTopic") # Obtiene el nombre del topic
+        topic_name = properties.getProperty("Discovery.Topic") # Obtiene el nombre del topic
         topic_manager = IceStorm.TopicManagerPrx.checkedCast(self.communicator().propertyToProxy("IceStorm.TopicManager.Proxy")) # Obtiene el proxy del topic manager
         try:
             topic = topic_manager.retrieve(topic_name) # Obtiene el topic
@@ -35,7 +35,7 @@ class BlobApp(Ice.Application):
         discoveryProxy = IceDrive.DiscoveryPrx.uncheckedCast(topic.getPublisher()) # Se obtiene el proxy del servant
         
         directory = self.communicator().getProperties().getProperty("directoryName") # Obtiene el nombre del directorio
-        blob_servant = BlobService(directory) # Se crea el servant
+        blob_servant = BlobService(directory, discovery_servant) # Se crea el servant
         blob_proxy = adapter.addWithUUID(blob_servant) # Se añade el servant al adaptador
         blob_proxy_cast = IceDrive.BlobServicePrx.uncheckedCast(blob_proxy) # Se obtiene el proxy del servant
         
